@@ -31,7 +31,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protect /welcome, /setup, /profile, /post — redirect unauthenticated users to /login
-  const protectedPaths = ['/welcome', '/setup', '/profile', '/post']
+  const protectedPaths = ['/welcome', '/setup', '/profile', '/post', '/explore']
   if (!user && protectedPaths.some(p => request.nextUrl.pathname.startsWith(p))) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
