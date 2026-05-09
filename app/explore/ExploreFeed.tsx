@@ -12,8 +12,8 @@ type Post = {
   created_at: string
   user_id: string
   profiles: Profile
-  likes: { count: number }[]
-  comments: { count: number }[]
+  likeCount: number
+  commentCount: number
 }
 
 type Comment = {
@@ -37,7 +37,7 @@ export default function ExploreFeed({
   const [liked, setLiked] = useState<Set<string>>(new Set(likedPostIds))
   const [following, setFollowing] = useState<Set<string>>(new Set(followingIds))
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>(
-    Object.fromEntries(initialPosts.map(p => [p.id, p.likes[0]?.count ?? 0]))
+    Object.fromEntries(initialPosts.map(p => [p.id, p.likeCount]))
   )
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -158,7 +158,7 @@ export default function ExploreFeed({
                 className="flex items-center gap-1.5 text-gray-400"
               >
                 <span className="text-xl">💬</span>
-                <span className="text-sm font-medium">{post.comments[0]?.count ?? 0}</span>
+                <span className="text-sm font-medium">{post.commentCount}</span>
               </button>
             </div>
           </div>
