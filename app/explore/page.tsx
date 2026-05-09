@@ -26,6 +26,7 @@ export default async function ExplorePage() {
     { data: commentsData },
     { data: myLikes },
     { data: myFollows },
+    { data: currentProfile },
   ] = await Promise.all([
     userIds.length > 0
       ? supabase.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
@@ -34,6 +35,7 @@ export default async function ExplorePage() {
     supabase.from('comments').select('post_id'),
     supabase.from('likes').select('post_id').eq('user_id', user.id),
     supabase.from('follows').select('following_id').eq('follower_id', user.id),
+    supabase.from('profiles').select('display_name, avatar_url').eq('id', user.id).single(),
   ])
 
   // Build lookup maps
@@ -69,6 +71,7 @@ export default async function ExplorePage() {
         likedPostIds={likedPostIds}
         followingIds={followingIds}
         currentUserId={user.id}
+        currentUserProfile={currentProfile ?? { display_name: 'Me', avatar_url: null }}
       />
 
       <BottomNav />

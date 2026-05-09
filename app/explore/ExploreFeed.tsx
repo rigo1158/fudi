@@ -20,6 +20,7 @@ type Comment = {
   id: string
   body: string
   created_at: string
+  user_id: string
   profiles: { display_name: string; avatar_url: string | null }
 }
 
@@ -28,11 +29,13 @@ export default function ExploreFeed({
   likedPostIds,
   followingIds,
   currentUserId,
+  currentUserProfile,
 }: {
   posts: Post[]
   likedPostIds: string[]
   followingIds: string[]
   currentUserId: string
+  currentUserProfile: { display_name: string; avatar_url: string | null }
 }) {
   const [liked, setLiked] = useState<Set<string>>(new Set(likedPostIds))
   const [following, setFollowing] = useState<Set<string>>(new Set(followingIds))
@@ -73,12 +76,38 @@ export default function ExploreFeed({
   async function openComments(post: Post) {
     setSelectedPost(post)
     setLoadingComments(true)
-    const { data } = await supabase
+
+    // Fetch comments without profile join (no direct FK comment.user_id → profiles.id)
+    const { data: rawComments } = await supabase
       .from('comments')
-      .select('id, body, created_at, profiles(display_name, avatar_url)')
+      .select('id, body, created_at, user_id')
       .eq('post_id', post.id)
       .order('created_at', { ascending: true })
-    setComments((data as unknown as Comment[]) ?? [])
+
+    if (!rawComments || rawComments.length === 0) {
+      setComments([])
+      setLoadingComments(false)
+      return
+    }
+
+    // Fetch profiles separately
+    const userIds = [...new Set(rawComments.map(c => c.user_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', userIds)
+
+    const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]))
+
+    const merged: Comment[] = rawComments.map(c => ({
+      id: c.id,
+      body: c.body,
+      created_at: c.created_at,
+      user_id: c.user_id,
+      profiles: profileMap[c.user_id] ?? { display_name: 'Unknown', avatar_url: null },
+    }))
+
+    setComments(merged)
     setLoadingComments(false)
   }
 
@@ -86,13 +115,24 @@ export default function ExploreFeed({
     e.preventDefault()
     if (!commentText.trim() || !selectedPost) return
     setCommentLoading(true)
+
+    const body = commentText.trim()
     const { data, error } = await supabase
       .from('comments')
-      .insert({ post_id: selectedPost.id, user_id: currentUserId, body: commentText.trim() })
-      .select('id, body, created_at, profiles(display_name, avatar_url)')
+      .insert({ post_id: selectedPost.id, user_id: currentUserId, body })
+      .select('id, created_at')
       .single()
+
     if (!error && data) {
-      setComments(prev => [...prev, data as unknown as Comment])
+      // Construct the comment locally — no join needed
+      const newComment: Comment = {
+        id: data.id,
+        body,
+        created_at: data.created_at,
+        user_id: currentUserId,
+        profiles: currentUserProfile,
+      }
+      setComments(prev => [...prev, newComment])
       setCommentText('')
     }
     setCommentLoading(false)
