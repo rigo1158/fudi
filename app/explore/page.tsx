@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import BottomNav from '@/app/components/BottomNav'
@@ -8,16 +10,18 @@ export default async function ExplorePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Fetch all posts with profile info, like count, comment count
-  const { data: posts } = await supabase
+  // Fetch all posts — left join on profiles so posts without a profile still appear
+  const { data: posts, error } = await supabase
     .from('posts')
     .select(`
       id, image_url, location, created_at, user_id,
-      profiles!inner(display_name, avatar_url),
+      profiles(display_name, avatar_url),
       likes(count),
       comments(count)
     `)
     .order('created_at', { ascending: false })
+
+  if (error) console.error('Explore fetch error:', error)
 
   // Fetch current user's likes and follows
   const [{ data: myLikes }, { data: myFollows }] = await Promise.all([
