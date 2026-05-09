@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { signOut } from './actions'
+import PostsGrid from '@/app/components/PostsGrid'
 
 export default async function WelcomePage() {
   const supabase = await createClient()
@@ -59,36 +59,8 @@ export default async function WelcomePage() {
         </p>
       </div>
 
-      {/* Posts grid */}
-      {posts && posts.length > 0 ? (
-        <div className="grid grid-cols-2 gap-1 px-1">
-          {posts.map((post) => (
-            <div key={post.id} className="relative aspect-square bg-gray-100">
-              <Image
-                src={post.image_url}
-                alt={post.location ?? 'Food post'}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 50vw, 300px"
-              />
-              {post.location && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-2">
-                  <p className="text-white text-xs font-medium truncate">
-                    📍 {post.location}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-          <span className="text-6xl mb-4">🍜</span>
-          <p className="text-gray-400 text-sm">
-            Tap + to share your first food photo
-          </p>
-        </div>
-      )}
+      {/* Posts grid with delete */}
+      <PostsGrid posts={posts ?? []} currentUserId={user.id} />
 
       {/* FAB */}
       <Link
