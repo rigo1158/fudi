@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/server'
 import { signOut } from './actions'
 import PostsGrid from '@/app/components/PostsGrid'
 import BottomNav from '@/app/components/BottomNav'
+import FollowSheet from '@/app/components/FollowSheet'
 
 export default async function WelcomePage() {
   const supabase = await createClient()
@@ -70,21 +71,13 @@ export default async function WelcomePage() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex gap-6">
-          <div className="text-center">
-            <p className="text-base font-bold text-gray-900">{posts?.length ?? 0}</p>
-            <p className="text-xs text-gray-400">posts</p>
-          </div>
-          <div className="text-center">
-            <p className="text-base font-bold text-gray-900">{followersCount ?? 0}</p>
-            <p className="text-xs text-gray-400">followers</p>
-          </div>
-          <div className="text-center">
-            <p className="text-base font-bold text-gray-900">{followingCount ?? 0}</p>
-            <p className="text-xs text-gray-400">following</p>
-          </div>
-        </div>
+        {/* Stats — tapping followers/following opens a list sheet */}
+        <FollowSheet
+          currentUserId={user.id}
+          postsCount={posts?.length ?? 0}
+          followersCount={followersCount ?? 0}
+          followingCount={followingCount ?? 0}
+        />
       </div>
 
       <div className="border-t border-gray-100 mb-1" />
